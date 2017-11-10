@@ -7,7 +7,20 @@ import mmh3
 from bitarray import bitarray
 from random import shuffle
  
-class BloomFilter(object):
+class Node:
+	def __init__(self,k):
+
+		self.bit=bitarray(k)
+		#to implement delete functionality. Count is present for each bit.
+		self.count=[0 for i in range(k)]
+
+		self.bit.setall(0)
+
+	def display(self):
+		print(self.bit)
+
+class BloomFilter:
+
     def __init__(self, items_count,fp_prob):
         self.fp_prob = fp_prob
  
@@ -16,17 +29,16 @@ class BloomFilter(object):
  
         # number of hash functions to use
         self.hash_count = self.get_hash_count(self.size,items_count)
+
+        #size of each partition
+        self.k=self.size/self.hash_count
  
-        # Bit array of given size
-        self.bit_array = bitarray(self.size)
- 
-        # initialize all bits as 0
-        self.bit_array.setall(0)
- 
-    def add(self, item):
-        '''
-        Add an item in the filter
-        '''
+        # List of bit arrays to partition the data
+        self.bit_array = [Node(self.k) for x in range(self.hash_count)]
+   	
+
+    '''def add(self, item):
+       # Add an item in the filter
         digests = []
         for i in range(self.hash_count):
  
@@ -37,7 +49,7 @@ class BloomFilter(object):
             digests.append(digest)
  
             # set the bit True in bit_array
-            self.bit_array[digest] = True
+            self.bit_array[digest] = True'''
  
     def check(self, item):
         '''
@@ -53,7 +65,7 @@ class BloomFilter(object):
                 return False
         return True
  
-    @classmethod
+    
     def get_size(self,n,p):
         '''
         Return the size of bit array(m) to used using
@@ -67,7 +79,7 @@ class BloomFilter(object):
         m = -(n * math.log(p))/(math.log(2)**2)
         return int(m)
  
-    @classmethod
+   
     def get_hash_count(self, m, n):
         '''
         Return the hash function(k) to be used using
@@ -78,16 +90,46 @@ class BloomFilter(object):
             size of bit array
         n : int
             number of items expected to be stored in filter
+        
         '''
+        
         k = (m/n) * math.log(2)
         return int(k)
 
+    def display(self):
+    	for i in range(self.hash_count):
+ 			print(self.bit_array[i].display())
+
+ 	def Query(self,x):
+ 		
+ 		for i in range(0,self.k):
+ 			index=mmh3.hash(item,i) % self.size
+ 			if self.bitarray[index]==0:
+ 				return False
+
+ 		return True
+
+ 	def add(self,x):
+ 		for i in range(0,self.k):
+ 			for j in range(self.get_hash_count):
+ 				if j==0:
+ 					index=mmh3.hash(item,i) %self.size
+ 				if self.bitarray[j].bit[index]==1:
+ 					self.bitarray[j].count[index]+=1
+ 				else:
+ 					self.bitarray[j].bit[index]=1
+ 					self.bitarray[j].count[index]=1
 def main():  
     n = 20 #no of items to add
     p = 0.05 #false positive probability
  
     bloomf = BloomFilter(n,p)
-    print("Size of bit array:{}".format(bloomf.size))
+    #print(bloomf.bit_array)
+    #bloomf.get_hash_count(2,7)
+    bloomf.display()
+    bloomf.add("abound")
+  
+    '''print("Size of bit array:{}".format(bloomf.size))
     print("False positive Probability:{}".format(bloomf.fp_prob))
     print("Number of hash functions:{}".format(bloomf.hash_count))
  
@@ -118,6 +160,6 @@ def main():
                 print("'{}' is probably present!".format(word))
         else:
             print("'{}' is definitely not present!".format(word))
-
+'''
 if __name__=='__main__':
     main()
