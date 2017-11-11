@@ -4,3 +4,10 @@ Bloom filters are a probablistic data structure which are used to determine with
 
 ##Python Implementation of Accurate Counting Bloom Filters
 We use ACBF to reduce the false positive probability.We implement ACBFs in MapReduce to improve the reduce-side join performance. ACBF is used in the map phase to filter out redundant records shuffled. ACBF is constructed in a distributed way by merging local hash tables of all map tasks. 
+
+
+Work to be done:
+Input a large text file and hash it. Check if a word is present
+Find out how to calculate the false probabilty
+Application of ACBF
+
