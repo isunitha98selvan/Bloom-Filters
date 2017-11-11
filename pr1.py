@@ -38,36 +38,6 @@ class BloomFilter:
 		# List of bit arrays to partition the data
 		self.bit_array = [Node(self.k) for x in range(self.hash_count)]
 	
-
-	'''def add(self, item):
-	   # Add an item in the filter
-		digests = []
-		for i in range(self.hash_count):
- 
-			# create digest for given item.
-			# i work as seed to mmh3.hash() function
-			# With different seed, digest created is different
-			digest = mmh3.hash(item,i) % self.size
-			digests.append(digest)
- 
-			# set the bit True in bit_array
-			self.bit_array[digest] = True'''
- 
-	def check(self, item):
-		'''
-		Check for existence of an item in filter
-		'''
-		for i in range(self.hash_count):
-			digest = mmh3.hash(item,i) % self.size
-			if self.bit_array[digest] == False:
- 
-				# if any of bit is False then,its not present
-				# in filter
-				# else there is probability that it exist
-				return False
-		return True
- 
-	
 	def get_size(self,n,p):
 		'''
 		Return the size of bit array(m) to used using
@@ -105,9 +75,9 @@ class BloomFilter:
 #function to search for element
 	def Query(self,x):
 		
-		for i in range(0,self.k):
-			index=mmh3.hash(x,i) % self.hash_count
-			if self.bit_array[index]==0:
+		for i in range(0,self.hash_count):
+			index=mmh3.hash(x,i) % self.k
+			if self.bit_array[i].bit[index]==0:
 				return False
 		return True
 
@@ -117,7 +87,7 @@ class BloomFilter:
 	
 			for j in range(self.hash_count):
 				index=mmh3.hash(x,j) %self.k #doesnt generate different hash function eevry time. check this.
-				print(j,index)
+				#print(j,index)
 
 				if self.bit_array[j].bit[index]==1:
 					self.bit_array[j].count[index]+=1
@@ -136,7 +106,7 @@ class BloomFilter:
 				if self.bit_array[j].bit[index]==1:
 					self.bit_array[j].count[index]-=1
 				else:
-					print("Element doesn't exist")
+					print("Elementdoes not exist")
 					return
 		print("Element successully deleted!")
 
@@ -145,18 +115,8 @@ def main():
 	p = 0.05 #false positive probability
  
 	bloomf = BloomFilter(n,p)
-	#print(bloomf.bit_array)
-	#bloomf.get_hash_count(2,7)
-	bloomf.display()
-	bloomf.add("abound")
-	bloomf.add("abound")
-  	bloomf.display()
-  	print(bloomf.Query("abound"))
-  	bloomf.delete("hello")
-  	bloomf.delete("abound")
-  	bloomf.display()
-
-	'''print("Size of bit array:{}".format(bloomf.size))
+	
+	print("Size of bit array:{}".format(bloomf.size))
 	print("False positive Probability:{}".format(bloomf.fp_prob))
 	print("Number of hash functions:{}".format(bloomf.hash_count))
  
@@ -180,13 +140,11 @@ def main():
 	test_words = word_present[:10] + word_absent
 	shuffle(test_words)
 	for word in test_words:
-		if bloomf.check(word):
-			if word in word_absent:
-				print("'{}' is a false positive!".format(word))
-			else:
-				print("'{}' is probably present!".format(word))
+		if bloomf.Query(word)==False:
+			print("'{}' is not present".format(word))
 		else:
-			print("'{}' is definitely not present!".format(word))
-'''
+			print("'{}' is probably present!".format(word))
+
+
 if __name__=='__main__':
 	main()
