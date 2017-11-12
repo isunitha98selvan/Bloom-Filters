@@ -105,8 +105,10 @@ class BloomFilter:
 
 				if self.bit_array[j].bit[index]==1:
 					self.bit_array[j].count[index]-=1
+				if self.bit_array[j].count[index]==0:
+					self.bit_array[j].bit[index]=0
 				else:
-					print("Elementdoes not exist")
+					print("Element does not exist")
 					return
 		print("Element successully deleted!")
 
@@ -116,6 +118,7 @@ def main():
  
 	bloomf = BloomFilter(n,p)
 	
+	print("Implementing an accurate counting bloom filter")
 	print("Size of bit array:{}".format(bloomf.size))
 	print("False positive Probability:{}".format(bloomf.fp_prob))
 	print("Number of hash functions:{}".format(bloomf.hash_count))
@@ -145,6 +148,40 @@ def main():
 		else:
 			print("'{}' is probably present!".format(word))
 
+	print("*****************************************************************")
 
+	'''Bloom filter application to check for already used usernames and weak passwords'''
+	'''Bloom filter data structure partition sizes and no of bits in each partition need to be changed to handle large
+	file sizes. Check how t partition more efficiently. Also calculate the runtime of the below application and space complexity''
+	'''
+	t=BloomFilter(2000000,p) #replace 2000 with number of words in username.txt
+	with open('usernames.txt','r') as f:
+		for line in f:
+			for word in line.split():
+				t.add(word)
+	flag=1
+	while flag==1:
+		user=raw_input("Enter Username ")
+		if t.Query(user)==True:
+			print("Username already in use!")
+			break
+		else:
+			flag=0
+			break
+
+	'''p=BloomFilter(20000,p) #replace 2000 with number of words in password.txt
+	with open('passlist.txt','r') as f:
+		for line in f:
+			for word in line.split():
+				t.add(word)
+	flag=0
+	while flag==0:
+		passwd=raw_input("Enter password")
+		if p.Query(passwd)==True:
+			print("Weak password!")
+		else:
+			flag=1
+			print("Strong password")
+'''
 if __name__=='__main__':
 	main()
