@@ -286,8 +286,8 @@ def main():
 				break
 
 #implementing scalable bloom filter
-s=ScalableBloomFilter()
-	s.add("Hello")
+	#s=ScalableBloomFilter()
+	#s.add("Hello")
 
 if __name__=='__main__':
 	main()
