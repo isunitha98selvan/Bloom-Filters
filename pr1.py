@@ -129,8 +129,7 @@ class ScalableBloomFilter(object):
 	LARGE_SET_GROWTH = 4 # faster, but takes up more memory faster
 
 
-	def __init__(self, initial_capacity=10, error_rate=0.001,
-				 mode=SMALL_SET_GROWTH):
+	def __init__(self, initial_capacity=10, error_rate=0.001,mode=SMALL_SET_GROWTH):
 		
 		if not error_rate or error_rate < 0:
 			raise ValueError("Error_Rate must be a decimal less than 0.")
@@ -157,14 +156,12 @@ class ScalableBloomFilter(object):
 		if key in self:
 			return True
 		if not self.filters:
-			filter = BloomFilter(capacity=self.initial_capacity,self.error_rate=self.error_rate * (1.0 - self.ratio))
+			filter = BloomFilter(20,0.08)
 			self.filters.append(filter)
 		else:
 			filter = self.filters[-1]
 			if filter.count >= filter.capacity:
-				filter = BloomFilter(
-					capacity=filter.capacity * self.scale,
-						self.error_rate=filter.error_rate * self.ratio)
+				filter = BloomFilter(20,0.08)
 				self.filters.append(filter)
 		filter.add(key, skip_check=True)
 		return False
@@ -284,10 +281,11 @@ def main():
 				flag=1
 				print("Password accepted")
 				break
-
+    s=ScalableBloomFilter()
+    s.add("Hello")
 #implementing scalable bloom filter
-s=ScalableBloomFilter()
-	s.add("Hello")
-
+    
 if __name__=='__main__':
 	main()
+
+
