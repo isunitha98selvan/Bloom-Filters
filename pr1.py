@@ -6,13 +6,14 @@ import math
 import mmh3
 from bitarray import bitarray
 from random import shuffle
+import numpy
  
 class Node:
 	def __init__(self,k):
 
 		self.bit=bitarray(k)
 		#to implement delete functionality. Count is present for each bit.
-		self.count=[0 for i in range(k)]
+		self.count=[bitarray(4) for i in range(k)]
 
 		self.bit.setall(0)
 
@@ -23,11 +24,11 @@ class Node:
 
 class BloomFilter:
 
-	def __init__(self, items_count,fp_prob):
-		self.fp_prob = fp_prob
+	def __init__(self, items_count,fb):
+		self.fp_prob = fb
  
 		# Size of bit array to use
-		self.size = self.get_size(items_count,fp_prob)
+		self.size = self.get_size(items_count,self.fp_prob)
  
 		# number of hash functions to use
 		self.hash_count = self.get_hash_count(self.size,items_count)
@@ -37,6 +38,7 @@ class BloomFilter:
  
 		# List of bit arrays to partition the data
 		self.bit_array = [Node(self.k) for x in range(self.hash_count)]
+
 	
 	def get_size(self,n,p):
 		'''
@@ -51,7 +53,8 @@ class BloomFilter:
 		m = -(n * math.log(p))/(math.log(2)**2)
 		return int(m)
  
-   
+ 	
+
 	def get_hash_count(self, m, n):
 		'''
 		Return the hash function(k) to be used using
@@ -114,9 +117,9 @@ class BloomFilter:
 
 def main():  
 	n = 20 #no of items to add
-	p = 0.05 #false positive probability
- 
-	bloomf = BloomFilter(n,p)
+ 	fp=0.08
+	bloomf = BloomFilter(n,fp)
+
 	
 	print("Implementing an accurate counting bloom filter")
 	print("Size of bit array:{}".format(bloomf.size))
@@ -154,34 +157,54 @@ def main():
 	'''Bloom filter data structure partition sizes and no of bits in each partition need to be changed to handle large
 	file sizes. Check how t partition more efficiently. Also calculate the runtime of the below application and space complexity''
 	'''
-	t=BloomFilter(2000000,p) #replace 2000 with number of words in username.txt
+	 #replace 2000 with number of words in username.txt
+	print("Checking for used usernames and weak passwords")
+	print("Size of bit array:{}".format(bloomf.size))
+	print("False positive Probability:{}".format(bloomf.fp_prob))
+	print("Number of hash functions:{}".format(bloomf.hash_count))
+	i = 0
+	f = open("usernames.txt", "r")
+	for i, line in enumerate(f):
+    	  pass
+	f.close()
+
+	t=BloomFilter(i,fp)
+
 	with open('usernames.txt','r') as f:
 		for line in f:
 			for word in line.split():
 				t.add(word)
+
 	flag=1
-	while flag==1:
+	while True:
 		user=raw_input("Enter Username ")
 		if t.Query(user)==True:
 			print("Username already in use!")
-			break
 		else:
+			print("Username accepted")
 			flag=0
 			break
 
-	'''p=BloomFilter(20000,p) #replace 2000 with number of words in password.txt
-	with open('passlist.txt','r') as f:
+	i = 0
+	f = open("passwords.txt", "r")
+	for i, line in enumerate(f):
+    	  pass
+	f.close()
+
+	t=BloomFilter(i,fp)
+	with open('passwords.txt','r') as f:
 		for line in f:
 			for word in line.split():
 				t.add(word)
-	flag=0
-	while flag==0:
-		passwd=raw_input("Enter password")
-		if p.Query(passwd)==True:
-			print("Weak password!")
-		else:
-			flag=1
-			print("Strong password")
-'''
+	if flag==0:
+		while True:
+			passwd=raw_input("Enter password ")
+			if t.Query(passwd)==True:
+				print("Please use another password! It is a common password!")
+			else:
+				flag=1
+				print("Password accepted")
+				break
+
 if __name__=='__main__':
 	main()
