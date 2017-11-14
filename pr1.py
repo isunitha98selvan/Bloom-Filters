@@ -2,11 +2,18 @@
 # Install mmh3 and bitarray 3rd party module first
 # pip install mmh3
 # pip install bitarray
+from __future__ import absolute_import
 import math
 import mmh3
 from bitarray import bitarray
 from random import shuffle
 import numpy
+import datetime
+import math
+import hashlib
+#from pybloom.utils import range_fn, is_string_io, running_python_3
+from struct import unpack, pack, calcsize
+
  
 class Node:
 	def __init__(self,k):
@@ -53,7 +60,7 @@ class BloomFilter:
 		m = -(n * math.log(p))/(math.log(2)**2)
 		return int(m)
  
- 	
+	
 
 	def get_hash_count(self, m, n):
 		'''
@@ -115,14 +122,73 @@ class BloomFilter:
 					return
 		print("Element successully deleted!")
 
-def main():  
-	n = 20 #no of items to add
- 	fp=0.08
-	bloomf = BloomFilter(n,fp)
+#SCALABLE DEFINITION
+class ScalableBloomFilter(object):
+
+	SMALL_SET_GROWTH = 2 # slower, but takes up less memory
+	LARGE_SET_GROWTH = 4 # faster, but takes up more memory faster
+
+
+	def __init__(self, initial_capacity=10, error_rate=0.001,
+				 mode=SMALL_SET_GROWTH):
+		
+		if not error_rate or error_rate < 0:
+			raise ValueError("Error_Rate must be a decimal less than 0.")
+		self.filters = []
+		self.scale = mode
+		self.ratio = 2
+		self.initial_capacity = initial_capacity
+		self.error_rate = error_rate
+
+	def __contains__(self, key):
+		"""Tests a key's membership in this bloom filter.
+		
+		"""
+		for f in reversed(self.filters):
+			if key in f:
+				return True
+		return False
+
+	def add(self, key):
+		"""Adds a key to this bloom filter.
+		If the key already exists in this filter it will return True.
+		Otherwise False.
+		"""
+		if key in self:
+			return True
+		if not self.filters:
+			filter = BloomFilter(capacity=self.initial_capacity,self.error_rate=self.error_rate * (1.0 - self.ratio))
+			self.filters.append(filter)
+		else:
+			filter = self.filters[-1]
+			if filter.count >= filter.capacity:
+				filter = BloomFilter(
+					capacity=filter.capacity * self.scale,
+						self.error_rate=filter.error_rate * self.ratio)
+				self.filters.append(filter)
+		filter.add(key, skip_check=True)
+		return False
 
 	
+	def capacity(self):
+		"""Returns the total capacity for all filters in this SBF"""
+		return sum(f.capacity for f in self.filters)
+
+	
+	def count(self):
+		return len(self)
+
+	def __len__(self):
+		"""Returns the total number of elements stored in this SBF"""
+		return sum(f.count for f in self.filters)
+
+def main():  
+	n = 20 #no of items to add
+	fp=0.08
+	bloomf = BloomFilter(n,fp)
+
 	print("Implementing an accurate counting bloom filter")
-	print("Size of bit array:{}".format(bloomf.size))
+	print("Size of bit array:{}".format(bloomf.k))
 	print("False positive Probability:{}".format(bloomf.fp_prob))
 	print("Number of hash functions:{}".format(bloomf.hash_count))
  
@@ -142,15 +208,25 @@ def main():
  
 	shuffle(word_present)
 	shuffle(word_absent)
- 
+	runtimes=0
 	test_words = word_present[:10] + word_absent
 	shuffle(test_words)
 	for word in test_words:
+		start = datetime.datetime.now()
 		if bloomf.Query(word)==False:
 			print("'{}' is not present".format(word))
 		else:
 			print("'{}' is probably present!".format(word))
+		finish = datetime.datetime.now()
+		print('Runtime: ',(finish-start).microseconds,"microseconds")
+		print("\n")
 
+		runtimes+=(finish-start).microseconds
+	avg=runtimes/n
+	print("Average Runtime:",avg, "microseconds")
+
+	print("\n")
+	print("\n")
 	print("*****************************************************************")
 
 	'''Bloom filter application to check for already used usernames and weak passwords'''
@@ -159,16 +235,19 @@ def main():
 	'''
 	 #replace 2000 with number of words in username.txt
 	print("Checking for used usernames and weak passwords")
-	print("Size of bit array:{}".format(bloomf.size))
-	print("False positive Probability:{}".format(bloomf.fp_prob))
-	print("Number of hash functions:{}".format(bloomf.hash_count))
+	
+	print("*****************************************************************")
+
+	#print("Number of hash functions:{}".format(bloomf.hash_count))
 	i = 0
 	f = open("usernames.txt", "r")
 	for i, line in enumerate(f):
-    	  pass
+		  pass
 	f.close()
 
 	t=BloomFilter(i,fp)
+	print("Size of bit array:{}".format(t.k))
+	print("False positive Probability:{}".format(t.fp_prob))
 
 	with open('usernames.txt','r') as f:
 		for line in f:
@@ -188,23 +267,27 @@ def main():
 	i = 0
 	f = open("passwords.txt", "r")
 	for i, line in enumerate(f):
-    	  pass
+		  pass
 	f.close()
 
-	t=BloomFilter(i,fp)
+	p=BloomFilter(i,fp)
 	with open('passwords.txt','r') as f:
 		for line in f:
 			for word in line.split():
-				t.add(word)
+				p.add(word)
 	if flag==0:
 		while True:
 			passwd=raw_input("Enter password ")
-			if t.Query(passwd)==True:
+			if p.Query(passwd)==True:
 				print("Please use another password! It is a common password!")
 			else:
 				flag=1
 				print("Password accepted")
 				break
+
+#implementing scalable bloom filter
+s=ScalableBloomFilter()
+	s.add("Hello")
 
 if __name__=='__main__':
 	main()
