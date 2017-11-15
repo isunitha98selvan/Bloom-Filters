@@ -13,6 +13,7 @@ import math
 import hashlib
 #from pybloom.utils import range_fn, is_string_io, running_python_3
 from struct import unpack, pack, calcsize
+import time
 
  
 class Node:
@@ -91,13 +92,10 @@ class BloomFilter:
 				return False
 		return True
 
-
-	#instead of import mmh3 ,add user defined hash functions.
 	def add(self,x):
 	
 			for j in range(self.hash_count):
-				index=mmh3.hash(x,j) %self.k #doesnt generate different hash function eevry time. check this.
-				#print(j,index)
+				index=mmh3.hash(x,j) %self.k 
 
 				if self.bit_array[j].bit[index]==1:
 					self.bit_array[j].count[index]+=1
@@ -123,68 +121,70 @@ class BloomFilter:
 		print("Element successully deleted!")
 
 #SCALABLE DEFINITION
-class ScalableBloomFilter(object):
+class ScalableBloomFilter:
 
-	SMALL_SET_GROWTH = 2 # slower, but takes up less memory
-	LARGE_SET_GROWTH = 4 # faster, but takes up more memory faster
-
-
-	def __init__(self, initial_capacity=10, error_rate=0.001,mode=SMALL_SET_GROWTH):
+	def __init__(self, initial_capacity=200, error_rate=0.001):
 		
 		if not error_rate or error_rate < 0:
 			raise ValueError("Error_Rate must be a decimal less than 0.")
-		self.filters = []
-		self.scale = mode
-		self.ratio = 2
+		self.filters =  bitarray(initial_capacity)
 		self.initial_capacity = initial_capacity
 		self.error_rate = error_rate
+		self.count=0
+		self.hash_count = self.get_hash_count(self.initial_capacity,20)
 
-	def __contains__(self, key):
-		"""Tests a key's membership in this bloom filter.
-		
-		"""
-		for f in reversed(self.filters):
-			if key in f:
-				return True
-		return False
+		#size of each partition
+		self.k=self.initial_capacity//self.hash_count
+		self.capacity=self.initial_capacity
 
+	def get_size(self,n,p):
+ 
+		m = -(n * math.log(p))/(math.log(2)**2)
+		return int(m)
+ 
+ 
+	def get_hash_count(self, m, n):
+		'''
+		Return the hash function(k) to be used using
+		following formula
+		k = (m/n) * lg(2)
+ 
+		m : int
+			size of bit array
+		n : int
+			number of items expected to be stored in filter
+		'''
+		k = (m/n) * math.log(2)
+		return int(k)
+	
 	def add(self, key):
 		"""Adds a key to this bloom filter.
 		If the key already exists in this filter it will return True.
 		Otherwise False.
 		"""
-		if key in self:
-			return True
-		if not self.filters:
-			filter = BloomFilter(20,0.08)
-			print(filter.bit_array)
-			self.filters.append(filter)
-		else:
-			filter = self.filters[-1]
-			if filter.count >= filter.capacity:
-				filter = BloomFilter(20,0.08)
-				self.filters.append(filter)
-		filter.add(key)
 
-		return False
+		self.count+=1
+		print(self.count)
+		if self.count>self.initial_capacity:
+			filters=bitarray(self.initial_capacity)
+			self.capacity+=self.initial_capacity
 
-	
-	def capacity(self):
-		"""Returns the total capacity for all filters in this SBF"""
-		return sum(f.capacity for f in self.filters)
+		self.filters.append(filter)
+		for i in range(self.hash_count):
+			# create digest for given item.
+			# i work as seed to mmh3.hash() function
+			# With different seed, digest created is different
+			digest = mmh3.hash(key,i) % self.capacity
+			#print(digest)
+			#print(len(self.filters))
+			self.filters[digest] = 1
 
-	
-	def count(self):
-		return len(self)
-
-	def __len__(self):
-		"""Returns the total number of elements stored in this SBF"""
-		return sum(f.count for f in self.filters)
 
 def main():  
 	n = 20 #no of items to add
 	fp=0.08
 	bloomf = BloomFilter(n,fp)
+
 
 	print("Implementing an accurate counting bloom filter")
 	print("Size of bit array:{}".format(bloomf.k))
@@ -226,6 +226,7 @@ def main():
 
 	print("\n")
 	print("\n")
+	time.sleep(10)
 	print("*****************************************************************")
 
 	'''Bloom filter application to check for already used usernames and weak passwords'''
@@ -283,20 +284,23 @@ def main():
 				flag=1
 				print("Password accepted")
 				break
-	s=ScalableBloomFilter()
-	s.add("Hello")
-	s.__contains__("Hello")
-	print(s.__len__)
-	'''with open('usernames.txt','r') as f:
+
+	t=ScalableBloomFilter()
+
+	f = open("passwords.txt", "r")
+	for i, line in enumerate(f):
+		  pass
+	f.close()
+	time.sleep(10)
+	print("****************************************************************")
+	print("Scalable Bloom filter Implementation")
+	print("Dispaying weak passwords using SBF")
+	p=ScalableBloomFilter()
+	with open('passwords.txt','r') as f:
 		for line in f:
 			for word in line.split():
-				s.add(word)
-'''
-#implementing scalable bloom filter
+				p.add(word)
+				print(word)
 
-	#s=ScalableBloomFilter()
-	#s.add("Hello")
 if __name__=='__main__':
 	main()
-
-
